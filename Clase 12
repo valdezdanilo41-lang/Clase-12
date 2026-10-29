@@ -1,0 +1,141 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <limits> // Para limpiar el buffer de entrada
+
+using namespace std;
+
+// ==========================================
+// 1. DEFINICIÓN DE ESTRUCTURA
+// ==========================================
+struct Personaje {
+    string nombre;
+    int vida;
+    int ataque;
+};
+
+// ==========================================
+// PROTOTIPOS DE FUNCIONES
+// ==========================================
+void registrarPersonaje();
+void verPersonajes();
+void mostrarMenu();
+
+// ==========================================
+// FUNCIÓN PRINCIPAL (CONTROLADOR DEL MENÚ)
+// ==========================================
+int main() {
+    int opcion;
+
+    do {
+        mostrarMenu();
+        cout << "Elija una opcion: ";
+        cin >> opcion;
+
+        // Limpieza de buffer para evitar errores al leer strings despues de un int
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+
+        switch (opcion) {
+            case 1:
+                registrarPersonaje();
+                break;
+            case 2:
+                verPersonajes();
+                break;
+            case 3:
+                cout << "Saliendo del programa..." << endl;
+                break;
+            default:
+                cout << "Opcion invalida. Intente de nuevo." << endl;
+        }
+
+        cout << endl; // Linea en blanco para mayor claridad
+
+    } while (opcion != 3);
+
+    return 0;
+}
+
+// ==========================================
+// DEFINICIÓN DE FUNCIONES
+// ==========================================
+
+// Muestra las opciones del menú interactivo
+void mostrarMenu() {
+    cout << "--- MENU INTERACTIVO ---" << endl;
+    cout << "[1] Registrar nuevo personaje" << endl;
+    cout << "[2] Ver todos los personajes guardados" << endl;
+    cout << "[3] Salir" << endl;
+    cout << "------------------------" << endl;
+}
+
+// 2. REGISTRO EN ARCHIVO
+// Solicita los datos de un personaje y los guarda en el archivo
+void registrarPersonaje() {
+    Personaje p;
+    // 5. BUENAS PRÁCTICAS: Declaración de ofstream fuera del bloque 'if' para asegurar el close()
+    ofstream archivo;
+    
+    // Abre el archivo en modo adición (ios::app) para no borrar lo existente
+    archivo.open("personajes.txt", ios::app);
+
+    if (archivo.is_open()) {
+        cout << "\n--- REGISTRAR PERSONAJE ---" << endl;
+        cout << "Nombre: ";
+        getline(cin, p.nombre); // Permite espacios en el nombre
+        
+        cout << "Vida: ";
+        cin >> p.vida;
+        
+        cout << "Ataque: ";
+        cin >> p.ataque;
+
+        // Guarda los datos en el archivo con un delimitador (coma o espacio)
+        archivo << p.nombre << "," << p.vida << "," << p.ataque << endl;
+
+        cout << "Personaje guardado exitosamente." << endl;
+        
+        // 5. BUENAS PRÁCTICAS: Cierre explícito del archivo
+        archivo.close();
+    } else {
+        cerr << "Error: No se pudo abrir el archivo personajes.txt para escritura." << endl;
+    }
+}
+
+// 3. CONSULTA Y LECTURA
+// Lee todos los personajes del archivo y los muestra por consola
+void verPersonajes() {
+    ifstream archivo;
+    archivo.open("personajes.txt");
+
+    if (archivo.is_open()) {
+        cout << "\n--- LISTA DE PERSONAJES ---" << endl;
+        string linea;
+        // 3. CONSULTA Y LECTURA: Uso de getline() para leer linea por linea
+        while (getline(archivo, linea)) {
+            // El formato es: Nombre,Vida,Ataque
+            // Usaremos find y substr para extraer los datos
+            size_t coma1 = linea.find(',');
+            size_t coma2 = linea.rfind(',');
+
+            if (coma1 != string::npos && coma2 != string::npos && coma1 != coma2) {
+                string nombre = linea.substr(0, coma1);
+                string vidaStr = linea.substr(coma1 + 1, coma2 - coma1 - 1);
+                string ataqueStr = linea.substr(coma2 + 1);
+
+                cout << "Nombre: " << nombre 
+                     << "\t | Vida: " << vidaStr 
+                     << "\t | Ataque: " << ataqueStr << endl;
+            } else {
+                // Si la linea no tiene el formato correcto, podemos mostrar una advertencia o simplemente saltarla
+                // Para este ejercicio, asumiremos formato correcto, pero es buena práctica gestionarlo.
+            }
+        }
+        cout << "------------------------" << endl;
+        
+        // 5. BUENAS PRÁCTICAS: Cierre explícito del archivo
+        archivo.close();
+    } else {
+        cerr << "Error: No se pudo abrir el archivo personajes.txt para lectura. Asegurese de haber registrado al menos un personaje." << endl;
+    }
+}
